@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CarController : MonoBehaviour
 {
@@ -27,14 +28,37 @@ public class CarController : MonoBehaviour
     [SerializeField] private Transform rearLeftWheelTransform;
     [SerializeField] private Transform rearRightWheelTransform;
 
+    [SerializeField] private Text speedText;
+    public float CurrentSpeed { get; private set; }
+    private Rigidbody rb;
+
+    // m/s から km/h へ変換
+    private const float convertValue = 3.6f;
+
+    private void Start()
+    {
+        rb = GetComponent<Rigidbody>();
+    }
+
     private void FixedUpdate()
     {
         GetInput();
+
         HandleMotor();
+
         HandleSteering();
+
         UpdateWheels();
+
+        DisplaySpeed();
     }
 
+    // スピードの計算と表示
+    private void DisplaySpeed()
+    {
+        CurrentSpeed = Mathf.Round(rb.velocity.magnitude * convertValue);
+        speedText.text = CurrentSpeed.ToString() + "km/h";
+    }
 
     private void GetInput()
     {
@@ -43,6 +67,7 @@ public class CarController : MonoBehaviour
         isBreaking = Input.GetKey(KeyCode.Space);
     }
 
+    // アクセル
     private void HandleMotor()
     {
         frontLeftWheelCollider.motorTorque = verticalInput * motorForce;
@@ -51,6 +76,7 @@ public class CarController : MonoBehaviour
         ApplyBreaking();
     }
 
+    // ブレーキ
     private void ApplyBreaking()
     {
         frontRightWheelCollider.brakeTorque = currentbreakForce;
@@ -59,6 +85,7 @@ public class CarController : MonoBehaviour
         rearRightWheelCollider.brakeTorque = currentbreakForce;
     }
 
+    // ハンドル回転
     private void HandleSteering()
     {
         currentSteerAngle = maxSteerAngle * horizontalInput;
@@ -74,12 +101,10 @@ public class CarController : MonoBehaviour
         UpdateSingleWheel(rearLeftWheelCollider, rearLeftWheelTransform);
     }
 
+    // タイヤの更新
     private void UpdateSingleWheel(WheelCollider wheelCollider, Transform wheelTransform)
     {
-        Vector3 pos;
-        Quaternion rot;
-
-        wheelCollider.GetWorldPose(out pos, out rot);
+        wheelCollider.GetWorldPose(out Vector3 pos, out Quaternion rot);
         wheelTransform.rotation = rot;
         wheelTransform.position = pos;
     }
