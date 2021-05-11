@@ -4,18 +4,30 @@ using UnityEngine;
 
 public class CarAudio : MonoBehaviour
 {
-    [SerializeField] private AudioClip accelSound;
+    [SerializeField] private AudioClip accelClip;
 
-    private AudioSource audioSource;
+    private AudioSource _accelSound;
 
     void Start()
     {
-        audioSource = gameObject.GetComponent<AudioSource>();
-        audioSource.clip = accelSound;
+        _accelSound = SetUpAudioSource(accelClip);
     }
 
     void Update()
     {
+        // 速度に応じてエンジン音のピッチを上げる
+        _accelSound.pitch = 0.25f + CarController.GetSpeed() / 100.0f;
+    }
 
+    // AudioClip のセットアップ
+    private AudioSource SetUpAudioSource(AudioClip clip)
+    {
+        AudioSource source = gameObject.AddComponent<AudioSource>();
+        source.clip = clip;
+        source.volume = 1;
+        source.loop = true;
+        source.Play();
+
+        return source;
     }
 }
