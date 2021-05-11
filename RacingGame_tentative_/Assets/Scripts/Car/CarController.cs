@@ -28,8 +28,7 @@ public class CarController : MonoBehaviour
     [SerializeField] private Transform rearLeftWheelTransform;
     [SerializeField] private Transform rearRightWheelTransform;
 
-    [SerializeField] private Text speedText;
-    public float CurrentSpeed { get; private set; }
+    private static float currentSpeed;
     private Rigidbody rb;
 
     // m/s から km/h へ変換
@@ -50,14 +49,18 @@ public class CarController : MonoBehaviour
 
         UpdateWheels();
 
-        DisplaySpeed();
+        CalculateSpeed();
     }
 
-    // スピードの計算と表示
-    private void DisplaySpeed()
+    public static float GetSpeed()
     {
-        CurrentSpeed = Mathf.Round(rb.velocity.magnitude * convertValue);
-        speedText.text = CurrentSpeed.ToString() + "km/h";
+        return currentSpeed;
+    }
+
+    // スピードの計算
+    private void CalculateSpeed()
+    {
+        currentSpeed = Mathf.Round(rb.velocity.magnitude * convertValue);
     }
 
     private void GetInput()

@@ -8,7 +8,7 @@ public class SpeedMeter : MonoBehaviour {
 	[SerializeField]
 	private float _speed = 0.0f;
 
-	// [SerializeField]
+	[SerializeField]
 	private TextMeshProUGUI _speedText;
 
 	// Start is called before the first frame update
@@ -18,10 +18,14 @@ public class SpeedMeter : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update() {
+		_speed = CarController.GetSpeed();
+
 		if (_speed > 1000) {
 			_speed = 999;
 		}
+
 		// スピードメーターの数値を更新する
-		_speedText.text = Math.Floor(_speed).ToString();
+		_speedText.text = _speed.ToString();
+
 	}
 }
