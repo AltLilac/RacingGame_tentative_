@@ -5,14 +5,14 @@ using UnityEngine.UI;
 
 public class CarController : MonoBehaviour
 {
-    private const string HORIZONTAL = "Horizontal";
-    private const string VERTICAL = "Vertical";
+    private const string _Horizontal = "Horizontal";
+    private const string _Vertical = "Vertical";
 
-    private float horizontalInput;
-    private float verticalInput;
-    private float currentSteerAngle;
-    private float currentbreakForce;
-    private bool isBreaking;
+    private float _horizontalInput;
+    private float _verticalInput;
+    private float _currentSteerAngle;
+    private float _currentbreakForce;
+    private bool _isBreaking;
 
     [SerializeField] private float motorForce;
     [SerializeField] private float breakForce;
@@ -28,16 +28,15 @@ public class CarController : MonoBehaviour
     [SerializeField] private Transform rearLeftWheelTransform;
     [SerializeField] private Transform rearRightWheelTransform;
 
-    [SerializeField] private Text speedText;
-    public float CurrentSpeed { get; private set; }
-    private Rigidbody rb;
+    private static float _currentSpeed;
+    private Rigidbody _rb;
 
     // m/s から km/h へ変換
-    private const float convertValue = 3.6f;
+    private const float _ConvertValue = 3.6f;
 
     private void Start()
     {
-        rb = GetComponent<Rigidbody>();
+        _rb = GetComponent<Rigidbody>();
     }
 
     private void FixedUpdate()
@@ -53,44 +52,48 @@ public class CarController : MonoBehaviour
         DisplaySpeed();
     }
 
-    // スピードの計算と表示
-    private void DisplaySpeed()
+    public static void GetSpeed()
     {
-        CurrentSpeed = Mathf.Round(rb.velocity.magnitude * convertValue);
-        speedText.text = CurrentSpeed.ToString() + "km/h";
+        return _currentSpeed;
+    }
+
+    // スピードの計算
+    private void CalculateSpeed()
+    {
+        _currentSpeed = Mathf.Round(_rb.velocity.magnitude * convertValue);
     }
 
     private void GetInput()
     {
-        horizontalInput = Input.GetAxis(HORIZONTAL);
-        verticalInput = Input.GetAxis(VERTICAL);
-        isBreaking = Input.GetKey(KeyCode.Space);
+        _horizontalInput = Input.GetAxis(_Horizontal);
+        _verticalInput = Input.GetAxis(_Vertical);
+        _isBreaking = Input.GetKey(KeyCode.Space);
     }
 
     // アクセル
     private void HandleMotor()
     {
-        frontLeftWheelCollider.motorTorque = verticalInput * motorForce;
-        frontRightWheelCollider.motorTorque = verticalInput * motorForce;
-        currentbreakForce = isBreaking ? breakForce : 0f;
+        frontLeftWheelCollider.motorTorque = _verticalInput * motorForce;
+        frontRightWheelCollider.motorTorque = _verticalInput * motorForce;
+        _currentbreakForce = _isBreaking ? breakForce : 0f;
         ApplyBreaking();
     }
 
     // ブレーキ
     private void ApplyBreaking()
     {
-        frontRightWheelCollider.brakeTorque = currentbreakForce;
-        frontLeftWheelCollider.brakeTorque = currentbreakForce;
-        rearLeftWheelCollider.brakeTorque = currentbreakForce;
-        rearRightWheelCollider.brakeTorque = currentbreakForce;
+        frontRightWheelCollider.brakeTorque = _currentbreakForce;
+        frontLeftWheelCollider.brakeTorque = _currentbreakForce;
+        rearLeftWheelCollider.brakeTorque = _currentbreakForce;
+        rearRightWheelCollider.brakeTorque = _currentbreakForce;
     }
 
     // ハンドル回転
     private void HandleSteering()
     {
-        currentSteerAngle = maxSteerAngle * horizontalInput;
-        frontLeftWheelCollider.steerAngle = currentSteerAngle;
-        frontRightWheelCollider.steerAngle = currentSteerAngle;
+        _currentSteerAngle = maxSteerAngle * _horizontalInput;
+        frontLeftWheelCollider.steerAngle = _currentSteerAngle;
+        frontRightWheelCollider.steerAngle = _currentSteerAngle;
     }
 
     private void UpdateWheels()
