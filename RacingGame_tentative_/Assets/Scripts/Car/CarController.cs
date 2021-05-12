@@ -49,10 +49,10 @@ public class CarController : MonoBehaviour
 
         UpdateWheels();
 
-        DisplaySpeed();
+		CalculateSpeed();
     }
 
-    public static void GetSpeed()
+    public static float GetSpeed()
     {
         return _currentSpeed;
     }
@@ -60,7 +60,7 @@ public class CarController : MonoBehaviour
     // スピードの計算
     private void CalculateSpeed()
     {
-        _currentSpeed = Mathf.Round(_rb.velocity.magnitude * convertValue);
+        _currentSpeed = Mathf.Round(_rb.velocity.magnitude * _ConvertValue);
     }
 
     private void GetInput()
