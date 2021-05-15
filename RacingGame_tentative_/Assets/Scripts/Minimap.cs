@@ -1,17 +1,22 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UniRx;
+using UniRx.Triggers;
 
 public class Minimap : MonoBehaviour
 {
-	// Update is called once per frame
-	void Update()
-	{
-		// 追従する
-		var trans = Camera.main.transform;
+	// メインカメラから離すyの距離
+	private readonly float CAMERA_OFFSET = 300.0f;
 
-		transform.position = new Vector3(trans.position.x, trans.position.y + 300.0f, trans.position.z);
-		var rot = trans.rotation.eulerAngles;
-		transform.rotation = Quaternion.Euler(90.0f, rot.y, rot.z);
+	void Start()
+	{
+		// メインカメラから一定距離離れた角度に追従させる
+		this.UpdateAsObservable()
+			.Select(_ => Camera.main.transform)
+			.Subscribe(trans =>
+			{
+				transform.position = new Vector3(trans.position.x, trans.position.y + CAMERA_OFFSET, trans.position.z);
+				var rot = trans.rotation.eulerAngles;
+				transform.rotation = Quaternion.Euler(90.0f, rot.y, rot.z);
+			});
 	}
 }
