@@ -1,7 +1,7 @@
 using UnityEngine;
 using UniRx;
-using UniRx.Triggers;
 
+[RequireComponent(typeof(CollisionEventTrigger))]
 public class DestinationEvent : MonoBehaviour
 {
 	[SerializeField]
@@ -9,11 +9,11 @@ public class DestinationEvent : MonoBehaviour
 
 	void Start()
 	{
-		this.OnTriggerEnterAsObservable()
-			.Select(col => col.gameObject)
-			.Where(go => go.GetComponent<CarController>())
+		var trigger = GetComponent<CollisionEventTrigger>();
+
+		trigger.OnBeginEvent
 			.First()
-			.Subscribe(go =>
+			.Subscribe(col =>
 			{
 				// ゴールオブジェクトの生成
 				Instantiate(goalPrefab);

@@ -1,13 +1,14 @@
 using UnityEngine;
 using UniRx;
-using UniRx.Triggers;
 
+[RequireComponent(typeof(CollisionEventTrigger))]
 public class GoalEvent : MonoBehaviour
 {
 	void Start()
 	{
-		this.OnTriggerEnterAsObservable()
-			.Where(col => col.gameObject.GetComponent<CarController>())
+		var trigger = GetComponent<CollisionEventTrigger>();
+
+		trigger.OnBeginEvent
 			.First()
 			.Subscribe(_ =>
 			{

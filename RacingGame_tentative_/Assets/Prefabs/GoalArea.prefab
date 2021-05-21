@@ -12,7 +12,8 @@ GameObject:
   - component: {fileID: 552779775282627950}
   - component: {fileID: 552779775282627937}
   - component: {fileID: 552779775282627936}
-  - component: {fileID: 6008232375372712501}
+  - component: {fileID: 6454346569882103856}
+  - component: {fileID: 5590107617520261883}
   m_Layer: 0
   m_Name: GoalArea
   m_TagString: Untagged
@@ -97,7 +98,19 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
---- !u!114 &6008232375372712501
+--- !u!114 &6454346569882103856
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 552779775282627939}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e22b6af56f12255479eb0d83a37ff856, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &5590107617520261883
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

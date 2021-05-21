@@ -381,6 +381,7 @@ GameObject:
   - component: {fileID: 2073119407}
   - component: {fileID: 2073119406}
   - component: {fileID: 2073119405}
+  - component: {fileID: 2073119410}
   - component: {fileID: 2073119409}
   m_Layer: 0
   m_Name: EventTrigger
@@ -474,7 +475,19 @@ MonoBehaviour:
   m_GameObject: {fileID: 2073119404}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7061b552943bd564aa0795bb87f6afb2, type: 3}
+  m_Script: {fileID: 11500000, guid: 10b3027be0e190449b3b545a85d72424, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   goalPrefab: {fileID: 552779775282627939, guid: bc55c19193fdbd949b3f790469cc7758, type: 3}
+--- !u!114 &2073119410
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2073119404}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e22b6af56f12255479eb0d83a37ff856, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
