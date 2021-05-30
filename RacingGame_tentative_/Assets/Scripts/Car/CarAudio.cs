@@ -11,19 +11,16 @@ public class CarAudio : MonoBehaviour
 	[SerializeField] private float defaultPitch = 0.25f;		// 初期のピッチ値
 	[SerializeField] private float pitchMultiplier = 100.0f;	// ピッチシフト倍率
 
-    private AudioSource _accelSound;
-
-
     void Start()
     {
-        _accelSound = SetUpAudioSource(accelClip);
+        var accelSound = SetUpAudioSource(accelClip);
 
-    }
-
-    void Update()
-    {
-        // 速度に応じてエンジン音のピッチを上げる
-        _accelSound.pitch = defaultPitch + CarController.GetSpeed() / pitchMultiplier;
+		this.UpdateAsObservable()
+			.Subscribe(_ =>
+			{
+				// 速度に応じてエンジン音のピッチを上げる
+				accelSound.pitch = defaultPitch + CarController.GetSpeed() / pitchMultiplier;
+			});
     }
 
     // AudioClip のセットアップ
