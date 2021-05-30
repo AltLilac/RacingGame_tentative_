@@ -1,22 +1,29 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UniRx;
+using UniRx.Triggers;
 
 public class CarAudio : MonoBehaviour
 {
     [SerializeField] private AudioClip accelClip;
 
+	[SerializeField] private float defaultPitch = 0.25f;		// 初期のピッチ値
+	[SerializeField] private float pitchMultiplier = 100.0f;	// ピッチシフト倍率
+
     private AudioSource _accelSound;
+
 
     void Start()
     {
         _accelSound = SetUpAudioSource(accelClip);
+
     }
 
     void Update()
     {
         // 速度に応じてエンジン音のピッチを上げる
-        _accelSound.pitch = 0.25f + CarController.GetSpeed() / 100.0f;
+        _accelSound.pitch = defaultPitch + CarController.GetSpeed() / pitchMultiplier;
     }
 
     // AudioClip のセットアップ
