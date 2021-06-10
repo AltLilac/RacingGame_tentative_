@@ -7,6 +7,9 @@ using UniRx.Triggers;
 
 public class BeginEventProcess : MonoBehaviour
 {
+	// イベントコリジョン内に触れていたら、イベント開始可能なことを示すテキスト
+	[SerializeField] private GameObject[] onEventCollisionText;
+
 	private bool _inCollison = false;	// イベント開始 UI を出現させるコリジョン内にいるか
 
 	private readonly ReactiveProperty<bool> _beginEvent = new ReactiveProperty<bool>(false);    // イベント開始の通知を送る
@@ -15,6 +18,8 @@ public class BeginEventProcess : MonoBehaviour
 
 	void Start()
     {
+		ManageText(showFlag: false);
+
 		// イベントコリジョンに触れている場合、プレイヤーに通知する
 		this.OnTriggerEnterAsObservable()
 			.Where(collider => !_inCollison)
@@ -22,7 +27,6 @@ public class BeginEventProcess : MonoBehaviour
 			.Subscribe(collider =>
 			{
 				_inCollison = true;
-				Debug.Log("You can begin this event!");
 			});
 
 		// イベントコリジョンを出たら UI を消去
@@ -33,8 +37,9 @@ public class BeginEventProcess : MonoBehaviour
 			{
 				_inCollison = false;
 
+				ManageText(showFlag: false);
+
 				// 開始の是非に関わらず、イベント開始フラグを false に戻しておく
-				// TODO: イベント開始の通知を送るプロパティは作成したので、カットシーンを呼ぶ方法を考える
 				_beginEvent.Value = false;
 
 				Debug.Log("Exit to event collision");
@@ -45,7 +50,7 @@ public class BeginEventProcess : MonoBehaviour
 			.Where(_ => _inCollison)
 			.Subscribe(_ =>
 			{
-				Debug.Log("E キーでイベントを開始");
+				ManageText(showFlag: true);
 			});
 
 		// イベントコリジョン内で E キーを押したらイベント開始
@@ -56,7 +61,18 @@ public class BeginEventProcess : MonoBehaviour
 				_inCollison = false;
 				_beginEvent.Value = true;
 
+				ManageText(showFlag: false);
+
 				Debug.Log("イベント開始");
 			});
     }
+
+	// イベント開始可能なことを通知するテキストを制御する
+	private void ManageText(bool showFlag)
+	{
+		foreach (var objects in onEventCollisionText)
+		{
+			objects.SetActive(showFlag);
+		}
+	}
 }
