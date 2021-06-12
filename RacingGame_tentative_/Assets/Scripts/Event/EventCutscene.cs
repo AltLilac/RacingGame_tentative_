@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Playables;
 using UniRx;
 using UniRx.Triggers;
@@ -52,6 +53,12 @@ public class EventCutscene : MonoBehaviour
 		{
 			objects.SetActive(true);
 		}
+
+		// HUD シーンを無効化
+		SceneManager.UnloadSceneAsync("HUD");
+
+		// 車の Input をロックする
+		CarManager.IsCarInputEnabled = false;
 	}
 
 	// タイムライン終了時の処理
@@ -68,5 +75,11 @@ public class EventCutscene : MonoBehaviour
 		{
 			objects.SetActive(false);
 		}
+
+		// HUD シーンを戻す
+		SceneManager.LoadSceneAsync("HUD", LoadSceneMode.Additive);
+
+		// 車の Input ロックを解除する
+		CarManager.IsCarInputEnabled = true;
 	}
 }

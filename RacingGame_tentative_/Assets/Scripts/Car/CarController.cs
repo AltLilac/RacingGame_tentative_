@@ -47,6 +47,7 @@ public class CarController : MonoBehaviour
         _rb = GetComponent<Rigidbody>();
 
 		this.FixedUpdateAsObservable()
+			.Where(_ => CarManager.IsCarInputEnabled)
 			.Subscribe(_ =>
 			{
 				GetInput();
