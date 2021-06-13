@@ -20,6 +20,13 @@ public class BeginEventProcess : MonoBehaviour
     {
 		ManageText(showFlag: false);
 
+		this.UpdateAsObservable()
+			.Subscribe(_ =>
+			{
+				Debug.Log("_beginEvent.Value: " + _beginEvent.Value);
+				Debug.Log("_inCollision: " + _inCollison);
+			});
+
 		// イベントコリジョンに触れている場合、プレイヤーに通知する
 		this.OnTriggerEnterAsObservable()
 			.Where(collider => !_inCollison)
@@ -27,6 +34,8 @@ public class BeginEventProcess : MonoBehaviour
 			.Subscribe(collider =>
 			{
 				_inCollison = true;
+
+				Debug.Log("Enter to event collision");
 			});
 
 		// イベントコリジョンを出たら UI を消去
