@@ -10,10 +10,14 @@ using UniRx.Triggers;
 public class EventCutscene : MonoBehaviour
 {
 	[SerializeField] private BeginEventProcess beginEventProcess;
+
 	[SerializeField] private GameObject[] mainGameObjects;			// カットシーン再生中非表示にするゲームオブジェクト
 	[SerializeField] private GameObject[] cutsceneObjects;			// カットシーン再生中表示するゲームオブジェクト
 
 	private PlayableDirector _director;
+
+	private readonly ReactiveProperty<bool> _endCutscene = new ReactiveProperty<bool>(false);	// カットシーンの再生終了を通知する
+	public IReadOnlyReactiveProperty<bool> EndCutscene => _endCutscene;
 
 	void Start()
     {
@@ -27,7 +31,7 @@ public class EventCutscene : MonoBehaviour
 		_director.played += PlayedDirectorProcess;
 		_director.stopped += StopedDirectorProcess;
 
-		// BeginEventProcess クラスの _beginEvent が true になったら
+		// イベント開始の通知を受け取ったら
 		beginEventProcess.BeginEvent
 			.Where(beginEventFlag => beginEventFlag)
 			.Subscribe(beginEventFlag =>
@@ -79,7 +83,7 @@ public class EventCutscene : MonoBehaviour
 		// HUD シーンを戻す
 		SceneManager.LoadSceneAsync("HUD", LoadSceneMode.Additive);
 
-		// 車の Input ロックを解除する
-		CarManager.IsCarInputEnabled = true;
+		// カットシーン終了を通知
+		_endCutscene.Value = true;
 	}
 }

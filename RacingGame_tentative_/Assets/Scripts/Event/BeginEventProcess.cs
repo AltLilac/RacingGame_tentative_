@@ -64,6 +64,8 @@ public class BeginEventProcess : MonoBehaviour
 				ManageText(showFlag: false);
 
 				Debug.Log("イベント開始");
+
+				Destroy(gameObject);
 			});
     }
 
