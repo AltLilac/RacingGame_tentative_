@@ -8,7 +8,6 @@ using TMPro;
 public class EventMainpart : MonoBehaviour
 {
 	[SerializeField] private EventCutscene eventCutscene;				// イベントカットシーン終了通知を取得する用
-
 	[SerializeField] private EventType eventType = EventType.Default;   // イベントの種類
 
 	[SerializeField] private Transform startPoint;                      // スタート地点
@@ -18,7 +17,9 @@ public class EventMainpart : MonoBehaviour
 	public Transform EventGoalPoint => goalPoint;
 
 	[SerializeField] private TextMeshProUGUI countdownText;             // イベントスタート直前のカウントダウンに使用するテキスト
-	[SerializeField] private TextMeshProUGUI notifyStartText;			// カウントダウンが終わったら表示するテキスト
+	[SerializeField] private TextMeshProUGUI notifyStartText;           // カウントダウンが終わったら表示するテキスト
+
+	[SerializeField] private GameObject goalSign;						// ゴール地点に出現させる柱状の半透明オブジェクト
 
 	private bool isInEvent = false;										// イベント中かどうか
 
@@ -32,6 +33,8 @@ public class EventMainpart : MonoBehaviour
 
     void Start()
     {
+		goalSign.SetActive(false);
+
 		HideUI(countdownText, notifyStartText);
 
 		// カットシーンが終わったら
@@ -55,9 +58,6 @@ public class EventMainpart : MonoBehaviour
 
 						Debug.Log("start!");
 					});
-
-				// TODO: カウントダウンコルーチンが終了した際に通知し、GO! テキストの表示と同時に、車の Input のロックを解除できるようにする
-				// 即席のイベントを作る？
 			});
 
 		// チェックポイント無し（スタート地点とゴール地点のみ）イベントの場合
@@ -75,6 +75,7 @@ public class EventMainpart : MonoBehaviour
 	private void SpawnGoalSign()
 	{
 		// ゴール地点に大きな目印を出現させる
+		goalSign.SetActive(true);
 	}
 
 	// イベントスタート直前のカウントダウン
@@ -107,6 +108,14 @@ public class EventMainpart : MonoBehaviour
 		yield return new WaitForSeconds(2.0f);
 
 		HideUI(notifyStartText);
+	}
+
+	private void HideObjects<T>(params T[] gameObjects) where T : Object
+	{
+		foreach (var objects in gameObjects)
+		{
+			
+		}
 	}
 
 	// UI を隠しておく
