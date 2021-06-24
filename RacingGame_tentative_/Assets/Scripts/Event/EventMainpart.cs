@@ -10,6 +10,9 @@ public class EventMainpart : MonoBehaviour
 	[SerializeField] private EventCutscene eventCutscene;				// イベントカットシーン終了通知を取得する用
 	[SerializeField] private EventType eventType = EventType.Default;   // イベントの種類
 
+	[SerializeField] private int timelimit = 180;                       // イベントの制限時間
+	public int Timelimit => timelimit;
+
 	[SerializeField] private Transform startPoint;                      // スタート地点
 	public Transform EventStartPoint => startPoint;
 
@@ -18,10 +21,15 @@ public class EventMainpart : MonoBehaviour
 
 	[SerializeField] private TextMeshProUGUI countdownText;             // イベントスタート直前のカウントダウンに使用するテキスト
 	[SerializeField] private TextMeshProUGUI notifyStartText;           // カウントダウンが終わったら表示するテキスト
+	[SerializeField] private TextMeshProUGUI eventTimelimit;			// イベント中の制限時間を表示する UI
+	[SerializeField] private TextMeshProUGUI eventTimelimitInfo;		// 制限時間の上に表示するテキスト
 
 	[SerializeField] private GameObject goalSign;						// ゴール地点に出現させる柱状の半透明オブジェクト
 
-	private bool isInEvent = false;										// イベント中かどうか
+
+	// カウントダウンが終了し、イベント本体がスタートしたら通知する RP
+	private readonly ReactiveProperty<bool> _isEndCountdown = new ReactiveProperty<bool>(false);
+	public IReadOnlyReactiveProperty<bool> EndCountdown => _isEndCountdown;
 
 	// イベントの種類
 	enum EventType
@@ -35,7 +43,7 @@ public class EventMainpart : MonoBehaviour
     {
 		goalSign.SetActive(false);
 
-		HideUI(countdownText, notifyStartText);
+		HideUI(countdownText, notifyStartText, eventTimelimit, eventTimelimitInfo);
 
 		// カットシーンが終わったら
 		eventCutscene.EndCutscene
@@ -54,15 +62,27 @@ public class EventMainpart : MonoBehaviour
 
 						StartCoroutine(DisplayStartText());
 
-						isInEvent = true;
+						ShowUI(eventTimelimit, eventTimelimitInfo);
+
+						_isEndCountdown.Value = true;
 
 						Debug.Log("start!");
 					});
 			});
 
+		EndCountdown
+			.Where(isEndCountdown => isEndCountdown)
+			.Subscribe(isEndcountdown =>
+			{
+				//while (isEndcountdown)
+				//{
+				//	DecreaseTime(timelimit);
+				//}
+			});
+
 		// チェックポイント無し（スタート地点とゴール地点のみ）イベントの場合
 		this.UpdateAsObservable()
-			.Where(_ => isInEvent)
+			.Where(_ => _isEndCountdown.Value)
 			.Where(_ => eventType == EventType.NoCheckPointTimeAttack)
 			.Subscribe(_ =>
 			{
@@ -78,6 +98,16 @@ public class EventMainpart : MonoBehaviour
 		goalSign.SetActive(true);
 	}
 
+	private IEnumerator DecreaseTime(int time, float span = 1.0f)
+	{
+		while (time <= 0)
+		{
+			yield return new WaitForSeconds(span);
+
+			time--;
+		}
+	}
+
 	// イベントスタート直前のカウントダウン
 	private IEnumerator BeginCountdown()
 	{
@@ -88,16 +118,15 @@ public class EventMainpart : MonoBehaviour
 
 		int count = 3;
 
-		while (count >= 0)
+		// カウントダウンでの、1 秒待った後値をデクリメントする機能を別関数にしたい
+		countdownText.text = DecreaseTime(count).ToString();
+
+		if (count <= 0)
 		{
-			countdownText.text = count.ToString();
+			HideUI(countdownText);
 
-			yield return new WaitForSeconds(1.0f);
-
-			count--;
+			yield return null;
 		}
-
-		HideUI(countdownText);
 	}
 
 	// カウントダウン終了時のテキストを表示させる
@@ -110,20 +139,15 @@ public class EventMainpart : MonoBehaviour
 		HideUI(notifyStartText);
 	}
 
-	private void HideObjects<T>(params T[] gameObjects) where T : Object
-	{
-		foreach (var objects in gameObjects)
-		{
-			
-		}
-	}
-
 	// UI を隠しておく
 	private void HideUI(params TextMeshProUGUI[] texts)
 	{
 		foreach (var objects in texts)
 		{
-			objects.gameObject.SetActive(false);
+			if (objects.gameObject.activeSelf)
+			{
+				objects.gameObject.SetActive(false);
+			}
 		}
 	}
 
@@ -132,7 +156,10 @@ public class EventMainpart : MonoBehaviour
 	{
 		foreach (var objects in texts)
 		{
-			objects.gameObject.SetActive(true);
+			if (!objects.gameObject.activeSelf)
+			{
+				objects.gameObject.SetActive(true);
+			}
 		}
 	}
 }
