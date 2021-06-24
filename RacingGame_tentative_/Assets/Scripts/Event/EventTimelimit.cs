@@ -9,8 +9,6 @@ public class EventTimelimit : MonoBehaviour
 {
 	[SerializeField] private EventCutscene eventCutscene;	// カットシーン終了時の通知を購読する用
 	[SerializeField] private EventMainpart eventMainpart;   // カウントダウン終了時の通知を購読する用
-
-	// TODO: FormatException を解決して、イベント中の制限時間が正しく動作するかを確認する
 	
     void Start()
     {

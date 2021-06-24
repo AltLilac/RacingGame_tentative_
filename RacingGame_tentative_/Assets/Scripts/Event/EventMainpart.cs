@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,7 +11,7 @@ public class EventMainpart : MonoBehaviour
 	[SerializeField] private EventCutscene eventCutscene;				// イベントカットシーン終了通知を取得する用
 	[SerializeField] private EventType eventType = EventType.Default;   // イベントの種類
 
-	[SerializeField] private int timelimit = 180;                       // イベントの制限時間
+	[SerializeField] private int timelimit;                       // イベントの制限時間
 	public int Timelimit => timelimit;
 
 	[SerializeField] private Transform startPoint;                      // スタート地点
@@ -25,7 +26,6 @@ public class EventMainpart : MonoBehaviour
 	[SerializeField] private TextMeshProUGUI eventTimelimitInfo;		// 制限時間の上に表示するテキスト
 
 	[SerializeField] private GameObject goalSign;						// ゴール地点に出現させる柱状の半透明オブジェクト
-
 
 	// カウントダウンが終了し、イベント本体がスタートしたら通知する RP
 	private readonly ReactiveProperty<bool> _isEndCountdown = new ReactiveProperty<bool>(false);
@@ -61,7 +61,6 @@ public class EventMainpart : MonoBehaviour
 						CarManager.IsCarInputEnabled = true;
 
 						StartCoroutine(DisplayStartText());
-
 						ShowUI(eventTimelimit, eventTimelimitInfo);
 
 						_isEndCountdown.Value = true;
@@ -74,10 +73,7 @@ public class EventMainpart : MonoBehaviour
 			.Where(isEndCountdown => isEndCountdown)
 			.Subscribe(isEndcountdown =>
 			{
-				//while (isEndcountdown)
-				//{
-				//	DecreaseTime(timelimit);
-				//}
+				StartCoroutine(DecreaseTimelimit());
 			});
 
 		// チェックポイント無し（スタート地点とゴール地点のみ）イベントの場合
@@ -92,21 +88,6 @@ public class EventMainpart : MonoBehaviour
 		// ゴール地点のコリジョンに触れたら
     }
 
-	private void SpawnGoalSign()
-	{
-		// ゴール地点に大きな目印を出現させる
-		goalSign.SetActive(true);
-	}
-
-	private IEnumerator DecreaseTime(int time, float span = 1.0f)
-	{
-		while (time <= 0)
-		{
-			yield return new WaitForSeconds(span);
-
-			time--;
-		}
-	}
 
 	// イベントスタート直前のカウントダウン
 	private IEnumerator BeginCountdown()
@@ -118,18 +99,18 @@ public class EventMainpart : MonoBehaviour
 
 		int count = 3;
 
-		// カウントダウンでの、1 秒待った後値をデクリメントする機能を別関数にしたい
-		countdownText.text = DecreaseTime(count).ToString();
-
-		if (count <= 0)
+		while (count >= 0)
 		{
-			HideUI(countdownText);
+			countdownText.text = count.ToString();
 
-			yield return null;
+			yield return new WaitForSeconds(1.0f);
+
+			count--;
 		}
+
+		HideUI(countdownText);
 	}
 
-	// カウントダウン終了時のテキストを表示させる
 	private IEnumerator DisplayStartText()
 	{
 		ShowUI(notifyStartText);
@@ -139,7 +120,24 @@ public class EventMainpart : MonoBehaviour
 		HideUI(notifyStartText);
 	}
 
-	// UI を隠しておく
+	private IEnumerator DecreaseTimelimit()
+	{
+		while (timelimit >= 0)
+		{
+			yield return new WaitForSeconds(1.0f);
+
+			timelimit--;
+		}
+
+		// UI の残り時間が -1 になるのを防止する
+		timelimit = 0;
+	}
+
+	private void SpawnGoalSign()
+	{
+		goalSign.SetActive(true);
+	}
+
 	private void HideUI(params TextMeshProUGUI[] texts)
 	{
 		foreach (var objects in texts)
@@ -151,7 +149,6 @@ public class EventMainpart : MonoBehaviour
 		}
 	}
 
-	// UI を出現させる
 	private void ShowUI(params TextMeshProUGUI[] texts)
 	{
 		foreach (var objects in texts)
