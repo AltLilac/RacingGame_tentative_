@@ -9,54 +9,47 @@ using UniRx.Triggers;
 
 public class EventCutscene : MonoBehaviour
 {
-	[SerializeField] private BeginEventProcess beginEventProcess;
+	[SerializeField] private BeginEventProcess beginEventProcess;	// イベント開始の通知を受け取る用
+	[SerializeField] private EventMainpart eventMainpart;			// イベント終了の通知を受け取る用
 
 	[SerializeField] private GameObject[] mainGameObjects;			// カットシーン再生中非表示にするゲームオブジェクト
 	[SerializeField] private GameObject[] cutsceneObjects;			// カットシーン再生中表示するゲームオブジェクト
 
-	private PlayableDirector _director;
+	[SerializeField] private PlayableDirector director;				// アニメーションを再生するタイムラインを管理
 
-	private readonly ReactiveProperty<bool> _endCutscene = new ReactiveProperty<bool>(false);	// カットシーンの再生終了を通知する
-	public IReadOnlyReactiveProperty<bool> EndCutscene => _endCutscene;
+	private readonly ReactiveProperty<bool> _endBeginEventCutscene = new ReactiveProperty<bool>(false);	// イベント開始時のカットシーン再生終了を通知する
+	public IReadOnlyReactiveProperty<bool> EndBeginEventCutscene => _endBeginEventCutscene;
 
 	void Start()
     {
-		// カットシーン用のオブジェクトを非表示にしておく
-		foreach (var objects in cutsceneObjects)
-		{
-			objects.SetActive(false);
-		}
+		ManageActiveSelf(cutsceneObjects, activeState: false);
 
-		_director = GetComponent<PlayableDirector>();
-		_director.played += PlayedDirectorProcess;
-		_director.stopped += StopedDirectorProcess;
-
-		// イベント開始の通知を受け取ったら
 		beginEventProcess.BeginEvent
 			.Where(beginEventFlag => beginEventFlag)
 			.Subscribe(beginEventFlag =>
 			{
-				// タイムラインスタート
-				Debug.Log("Start timeline!");
+				director.played += PlayedDirectorProcessOnBeginEvent;
+				director.stopped += StopedDirectorProcessOnBeginEvent;
 
-				_director.Play();
+				director.Play();
+			});
+
+		eventMainpart.EndEvent
+			.Where(endEventFlag => endEventFlag)
+			.Subscribe(endEventFlag =>
+			{
+				director.played += PlayedDirectorProcessOnEndEvent;
+				director.stopped += StopedDirectorProcessOnEndEvent;
+
+				director.Play();
 			});
     }
 
 	// タイムラインの再生時の処理
-	private void PlayedDirectorProcess(PlayableDirector obj)
+	private void PlayedDirectorProcessOnBeginEvent(PlayableDirector obj)
 	{
-		// メインゲームのオブジェクトを全て非表示
-		foreach (var objects in mainGameObjects)
-		{
-			objects.SetActive(false);
-		}
-
-		// カットシーン用のオブジェクトを全て表示する
-		foreach (var objects in cutsceneObjects)
-		{
-			objects.SetActive(true);
-		}
+		ManageActiveSelf(mainGameObjects, activeState: false);
+		ManageActiveSelf(cutsceneObjects, activeState: true);
 
 		// HUD シーンを無効化
 		SceneManager.UnloadSceneAsync("HUD");
@@ -65,25 +58,45 @@ public class EventCutscene : MonoBehaviour
 		CarManager.IsCarInputEnabled = false;
 	}
 
-	// タイムライン終了時の処理
-	private void StopedDirectorProcess(PlayableDirector obj)
+	private void PlayedDirectorProcessOnEndEvent(PlayableDirector obj)
 	{
-		// インスペクタービューでセットした UI の非表示を解除する
-		foreach (var objects in mainGameObjects)
-		{
-			objects.SetActive(true);
-		}
+		// HUD シーンを無効化
+		SceneManager.UnloadSceneAsync("HUD");
 
-		// カットシーン用のオブジェクトを全て非表示
-		foreach(var objects in cutsceneObjects)
-		{
-			objects.SetActive(false);
-		}
+		// 車の Input をロックする
+		CarManager.IsCarInputEnabled = false;
+	}
+
+	// タイムライン終了時の処理
+	private void StopedDirectorProcessOnBeginEvent(PlayableDirector obj)
+	{
+		ManageActiveSelf(mainGameObjects, activeState: true);
+		ManageActiveSelf(cutsceneObjects, activeState: false);
 
 		// HUD シーンを戻す
 		SceneManager.LoadSceneAsync("HUD", LoadSceneMode.Additive);
 
 		// カットシーン終了を通知
-		_endCutscene.Value = true;
+		_endBeginEventCutscene.Value = true;
+	}
+
+	private void StopedDirectorProcessOnEndEvent(PlayableDirector obj)
+	{
+		// HUD シーンを戻す
+		SceneManager.LoadSceneAsync("HUD", LoadSceneMode.Additive);
+
+		// 車の Input のロックを解除
+		CarManager.IsCarInputEnabled = true;
+	}
+
+	private void ManageActiveSelf(GameObject[] gameObjects, bool activeState)
+	{
+		if (gameObjects != null)
+		{
+			foreach (var objects in gameObjects)
+			{
+				objects.SetActive(activeState);
+			}
+		}
 	}
 }

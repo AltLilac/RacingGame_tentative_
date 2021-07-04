@@ -1,18 +1,23 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using UniRx;
 using UniRx.Triggers;
 using TMPro;
 
+// TODO: タイムリミットの処理をゴールしたらやめるようにする
+
 public class EventMainpart : MonoBehaviour
 {
 	[SerializeField] private EventCutscene eventCutscene;				// イベントカットシーン終了通知を取得する用
-	[SerializeField] private EventType eventType = EventType.Default;   // イベントの種類
+	[SerializeField] private EventGoal eventGoal;						// イベントのゴール通知を取得する用
 
-	[SerializeField] private int timelimit;                       // イベントの制限時間
-	public int Timelimit => timelimit;
+	[SerializeField] private int defaultTimelimit;							// イベントの制限時間
+
+	private ReactiveProperty<int> _currentTimelimit;
+	public int GetCurrentTimelimit => _currentTimelimit.Value;
 
 	[SerializeField] private Transform startPoint;                      // スタート地点
 	public Transform EventStartPoint => startPoint;
@@ -23,44 +28,44 @@ public class EventMainpart : MonoBehaviour
 	[SerializeField] private TextMeshProUGUI countdownText;             // イベントスタート直前のカウントダウンに使用するテキスト
 	[SerializeField] private TextMeshProUGUI notifyStartText;           // カウントダウンが終わったら表示するテキスト
 	[SerializeField] private TextMeshProUGUI eventTimelimit;			// イベント中の制限時間を表示する UI
-	[SerializeField] private TextMeshProUGUI eventTimelimitInfo;		// 制限時間の上に表示するテキスト
-
-	[SerializeField] private GameObject goalSign;						// ゴール地点に出現させる柱状の半透明オブジェクト
+	[SerializeField] private TextMeshProUGUI eventTimelimitInfo;        // 制限時間の上に表示するテキスト
+	[SerializeField] private TextMeshProUGUI timeOverText;              // 制限時間超過時に表示するテキスト
+	[SerializeField] private TextMeshProUGUI winText;                   // 完走時に表示するテキスト
+	[SerializeField] private TextMeshProUGUI clearTimeText;             // クリアタイムを表示するテキスト
+	[SerializeField] private TextMeshProUGUI clearTimeInfo;				// クリアタイムの上に表示するテキスト
 
 	// カウントダウンが終了し、イベント本体がスタートしたら通知する RP
 	private readonly ReactiveProperty<bool> _isEndCountdown = new ReactiveProperty<bool>(false);
 	public IReadOnlyReactiveProperty<bool> EndCountdown => _isEndCountdown;
 
-	// イベントの種類
-	enum EventType
-	{
-		Default,
-		CheckPointTimeAttack,
-		NoCheckPointTimeAttack
-	};
+	// イベントの全行程が終了したことを通知する EP
+	private readonly ReactiveProperty<bool> _isEndEvent = new ReactiveProperty<bool>(false);
+	public IReadOnlyReactiveProperty<bool> EndEvent => _isEndEvent;
 
     void Start()
     {
-		goalSign.SetActive(false);
+		_currentTimelimit = new ReactiveProperty<int>(defaultTimelimit);
 
-		HideUI(countdownText, notifyStartText, eventTimelimit, eventTimelimitInfo);
+		eventGoal.gameObject.SetActive(false);
+
+		HideUI(countdownText, notifyStartText, eventTimelimit, eventTimelimitInfo, timeOverText, winText, clearTimeText, clearTimeInfo);
 
 		// カットシーンが終わったら
-		eventCutscene.EndCutscene
+		eventCutscene.EndBeginEventCutscene
 			.Where(endCutsceneFlag => endCutsceneFlag)
 			.Subscribe(endCutsceneFlag =>
 			{
 				// カウントダウンコルーチンが終了したら
 				Observable
 					.FromCoroutine(BeginCountdown)
-					.Publish()	// Hot 変換してコルーチンの複製を防ぐ
+					.Publish()
 					.RefCount()
 					.Subscribe(_ =>
 					{
 						// 車の Input のロックを解除
 						CarManager.IsCarInputEnabled = true;
 
-						StartCoroutine(DisplayStartText());
+						StartCoroutine(DisplayTemporaryText(span: 2.0f, notifyStartText));
 						ShowUI(eventTimelimit, eventTimelimitInfo);
 
 						_isEndCountdown.Value = true;
@@ -73,21 +78,49 @@ public class EventMainpart : MonoBehaviour
 			.Where(isEndCountdown => isEndCountdown)
 			.Subscribe(isEndcountdown =>
 			{
+				eventGoal.gameObject.SetActive(true);
+
 				StartCoroutine(DecreaseTimelimit());
 			});
 
-		// チェックポイント無し（スタート地点とゴール地点のみ）イベントの場合
-		this.UpdateAsObservable()
-			.Where(_ => _isEndCountdown.Value)
-			.Where(_ => eventType == EventType.NoCheckPointTimeAttack)
-			.Subscribe(_ =>
+		// ゴール地点のコリジョンに触れたら
+		eventGoal
+			.OnTriggerEnterAsObservable()
+			.Where(collider => collider.gameObject.CompareTag("Player"))
+			.Subscribe(collider =>
 			{
-				SpawnGoalSign();
+				clearTimeText.text
+					= $"{EventTimelimit.GetMinutesToString(defaultTimelimit - GetCurrentTimelimit)} : {EventTimelimit.GetSecondsToString(defaultTimelimit - GetCurrentTimelimit)}";
+
+				Observable
+					.FromCoroutine(EventFinished)
+					.Publish()
+					.RefCount()
+					.Subscribe(_ =>
+					{
+						Debug.Log("ゴールした");
+
+						_isEndEvent.Value = true;
+					});
 			});
 
-		// ゴール地点のコリジョンに触れたら
-    }
+		// 時間切れになったら
+		_currentTimelimit
+			.Where(time => time < 0)
+			.Subscribe(_ =>
+			{
+				Observable
+					.FromCoroutine(EventTimeOvered)
+					.Publish()
+					.RefCount()
+					.Subscribe(_ =>
+					{
+						Debug.Log("時間切れ");
 
+						_isEndEvent.Value = true;
+					});
+			});
+	}
 
 	// イベントスタート直前のカウントダウン
 	private IEnumerator BeginCountdown()
@@ -111,31 +144,57 @@ public class EventMainpart : MonoBehaviour
 		HideUI(countdownText);
 	}
 
-	private IEnumerator DisplayStartText()
-	{
-		ShowUI(notifyStartText);
-
-		yield return new WaitForSeconds(2.0f);
-
-		HideUI(notifyStartText);
-	}
-
 	private IEnumerator DecreaseTimelimit()
 	{
-		while (timelimit >= 0)
+		while (_currentTimelimit.Value >= 0)
 		{
 			yield return new WaitForSeconds(1.0f);
 
-			timelimit--;
+			_currentTimelimit.Value--;
 		}
 
 		// UI の残り時間が -1 になるのを防止する
-		timelimit = 0;
+		_currentTimelimit.Value = 0;
 	}
 
-	private void SpawnGoalSign()
+	private IEnumerator EventTimeOvered()
 	{
-		goalSign.SetActive(true);
+		float span = 2.0f;
+		CarManager.IsCarInputEnabled = false;
+
+		StartCoroutine(DisplayTemporaryText(span: span, timeOverText));
+
+		EndEventProcess();
+
+		// DisplayTemporaryText コルーチンの終了を待つ
+		yield return new WaitForSeconds(span);
+	}
+
+	private IEnumerator EventFinished()
+	{
+		float span = 2.0f;
+		StartCoroutine(DisplayTemporaryText(span: span, winText, clearTimeText, clearTimeInfo));
+
+		EndEventProcess();
+
+		// DisplayTemporaryText コルーチン終了を待つ
+		yield return new WaitForSeconds(span);
+	}
+
+	private void EndEventProcess()
+	{
+		eventGoal.gameObject.SetActive(false);
+
+		HideUI(eventTimelimit, eventTimelimitInfo);
+	}
+
+	private IEnumerator DisplayTemporaryText(float span, params TextMeshProUGUI[] texts)
+	{
+		ShowUI(texts);
+
+		yield return new WaitForSeconds(span);
+
+		HideUI(texts);
 	}
 
 	private void HideUI(params TextMeshProUGUI[] texts)

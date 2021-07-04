@@ -65,7 +65,7 @@ public class BeginEventProcess : MonoBehaviour
 
 				Debug.Log("イベント開始");
 
-				Destroy(gameObject);
+				gameObject.SetActive(false);
 			});
     }
 

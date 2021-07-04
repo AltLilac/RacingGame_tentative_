@@ -29,6 +29,10 @@ public class CarController : MonoBehaviour
     [SerializeField] private WheelCollider rearLeftWheelCollider;
     [SerializeField] private WheelCollider rearRightWheelCollider;
 
+	// 強制停止用に公開
+	public float FrontLeftWheelBreakTorque { get { return frontLeftWheelCollider.brakeTorque; } set { frontLeftWheelCollider.brakeTorque = value; } }
+	public float FrontRightWheelBreakTorque { get { return frontRightWheelCollider.brakeTorque; } set { frontRightWheelCollider.brakeTorque = value; } }
+
 	// タイヤの位置
     [SerializeField] private Transform frontLeftWheelTransform;
     [SerializeField] private Transform frontRightWheeTransform;
@@ -37,7 +41,8 @@ public class CarController : MonoBehaviour
 
     private static float _currentSpeed;		// HUD シーンへ送る速度の情報
 
-	private Rigidbody _rb;	// 速度計算用 Rigidbody
+	private Rigidbody _rb;					// 速度計算用 Rigidbody
+	public Rigidbody GetCarRigidbody => _rb;
 
     // m/s から km/h へ変換
     private const float _ConvertValue = 3.6f;

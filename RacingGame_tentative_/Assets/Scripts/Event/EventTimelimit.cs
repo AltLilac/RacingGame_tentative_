@@ -14,11 +14,11 @@ public class EventTimelimit : MonoBehaviour
     {
 		var timelimitUI = GetComponent<TextMeshProUGUI>();
 
-		eventCutscene.EndCutscene
+		eventCutscene.EndBeginEventCutscene
 			.Where(isEndCutscene => isEndCutscene)
 			.Subscribe(isEndcutscene =>
 			{
-				timelimitUI.text = $"{GetMinutesToString(eventMainpart.Timelimit)}:{GetSecondsToString(eventMainpart.Timelimit)}";
+				timelimitUI.text = $"{GetMinutesToString(eventMainpart.GetCurrentTimelimit)}:{GetSecondsToString(eventMainpart.GetCurrentTimelimit)}";
 			});
 
 		// 取得した時間を更新し続ける
@@ -26,11 +26,11 @@ public class EventTimelimit : MonoBehaviour
 			.Where(_ => eventMainpart.EndCountdown.Value)
 			.Subscribe(_ =>
 			{
-				timelimitUI.text = $"{GetMinutesToString(eventMainpart.Timelimit)}:{GetSecondsToString(eventMainpart.Timelimit)}";
+				timelimitUI.text = $"{GetMinutesToString(eventMainpart.GetCurrentTimelimit)}:{GetSecondsToString(eventMainpart.GetCurrentTimelimit)}";
 			});
     }
 
-	private string GetMinutesToString(int time)
+	static public string GetMinutesToString(int time)
 	{
 		// 10 分以下だったら 0 を先頭に挿入して返す
 		if ((time / 60) >= 10)
@@ -43,7 +43,7 @@ public class EventTimelimit : MonoBehaviour
 		}
 	}
 
-	private string GetSecondsToString(int time)
+	static public string GetSecondsToString(int time)
 	{
 		// 10 秒以下だったら 0 を先頭に挿入して返す
 		if ((time % 60) >= 10)
