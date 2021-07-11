@@ -10,7 +10,7 @@ using UniRx.Triggers;
 public class EventCutscene : MonoBehaviour
 {
 	[SerializeField] private BeginEventProcess beginEventProcess;	// イベント開始の通知を受け取る用
-	[SerializeField] private EventMainpart eventMainpart;			// イベント終了の通知を受け取る用
+	[SerializeField] private EventGoal eventGoal;					// イベントゴールの通知を受け取る用
 
 	[SerializeField] private GameObject[] mainGameObjects;			// カットシーン再生中非表示にするゲームオブジェクト
 	[SerializeField] private GameObject[] cutsceneObjects;			// カットシーン再生中表示するゲームオブジェクト
@@ -34,18 +34,29 @@ public class EventCutscene : MonoBehaviour
 				director.Play();
 			});
 
-		eventMainpart.EndEvent
-			.Where(endEventFlag => endEventFlag)
-			.Subscribe(endEventFlag =>
+		eventGoal
+			.OnTriggerEnterAsObservable()
+			.Where(collider => collider.gameObject.CompareTag("Player"))
+			.Subscribe(collider =>
 			{
+				// 車の Input をロックする
+				CarManager.IsCarInputEnabled = false;
+
 				director.played += PlayedDirectorProcessOnEndEvent;
 				director.stopped += StopedDirectorProcessOnEndEvent;
 
-				director.Play();
-			});
-    }
+				Observable
+					.FromCoroutine(DelayCoroutine)
+					.Publish()
+					.RefCount()
+					.Subscribe(_ =>
+					{
+						director.Play();
+					});
+		});
+	}
 
-	// タイムラインの再生時の処理
+	// イベント開始時におけるタイムライン開始の処理
 	private void PlayedDirectorProcessOnBeginEvent(PlayableDirector obj)
 	{
 		ManageActiveSelf(mainGameObjects, activeState: false);
@@ -56,18 +67,20 @@ public class EventCutscene : MonoBehaviour
 
 		// 車の Input をロックする
 		CarManager.IsCarInputEnabled = false;
+
+		Debug.Log("PlayedDirectorProcessOnBeginEvent");
 	}
 
+	// イベント終了時におけるタイムライン開始の処理
 	private void PlayedDirectorProcessOnEndEvent(PlayableDirector obj)
 	{
 		// HUD シーンを無効化
 		SceneManager.UnloadSceneAsync("HUD");
 
-		// 車の Input をロックする
-		CarManager.IsCarInputEnabled = false;
+		Debug.Log("PlayedDirectorProcessOnEndEvent");
 	}
 
-	// タイムライン終了時の処理
+	// イベント開始時におけるタイムライン終了の処理
 	private void StopedDirectorProcessOnBeginEvent(PlayableDirector obj)
 	{
 		ManageActiveSelf(mainGameObjects, activeState: true);
@@ -78,8 +91,11 @@ public class EventCutscene : MonoBehaviour
 
 		// カットシーン終了を通知
 		_endBeginEventCutscene.Value = true;
+
+		Debug.Log("StopedDirectorProcessOnBeginEvent");
 	}
 
+	// イベント終了時におけるタイムライン終了の処理
 	private void StopedDirectorProcessOnEndEvent(PlayableDirector obj)
 	{
 		// HUD シーンを戻す
@@ -87,6 +103,8 @@ public class EventCutscene : MonoBehaviour
 
 		// 車の Input のロックを解除
 		CarManager.IsCarInputEnabled = true;
+
+		Debug.Log("StopedDirectorProcessOnEndEvent");
 	}
 
 	private void ManageActiveSelf(GameObject[] gameObjects, bool activeState)
@@ -98,5 +116,11 @@ public class EventCutscene : MonoBehaviour
 				objects.SetActive(activeState);
 			}
 		}
+	}
+
+	// リザルト UI の表示を待つ
+	private IEnumerator DelayCoroutine()
+	{
+		yield return new WaitForSeconds(4.0f);
 	}
 }

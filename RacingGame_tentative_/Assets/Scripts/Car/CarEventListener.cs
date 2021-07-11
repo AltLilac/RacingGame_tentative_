@@ -22,6 +22,8 @@ public class CarEventListener : MonoBehaviour
 			.Where(beginEventFlag => beginEventFlag)
 			.Subscribe(BeginEventFlag =>
 			{
+				StopPlayer();
+
 				// イベント本体の開始地点へ遷移
 				StartCoroutine(SetPlayerTransform(eventMainpart.EventStartPoint));
 			});
@@ -49,8 +51,6 @@ public class CarEventListener : MonoBehaviour
 
 	private IEnumerator SetPlayerTransform(Transform moveTo)
 	{
-		StopPlayer();
-
 		yield return new WaitForSeconds(WaitFadeOutTime);
 
 		transform.position = moveTo.position;

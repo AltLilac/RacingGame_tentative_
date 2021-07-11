@@ -7,14 +7,14 @@ using UniRx;
 using UniRx.Triggers;
 using TMPro;
 
-// TODO: タイムリミットの処理をゴールしたらやめるようにする
+// TODO: 車を停止させた時、UI の速度計が 0 にならないので治す
 
 public class EventMainpart : MonoBehaviour
 {
 	[SerializeField] private EventCutscene eventCutscene;				// イベントカットシーン終了通知を取得する用
 	[SerializeField] private EventGoal eventGoal;						// イベントのゴール通知を取得する用
 
-	[SerializeField] private int defaultTimelimit;							// イベントの制限時間
+	[SerializeField] private int defaultTimelimit;						// イベントの制限時間
 
 	private ReactiveProperty<int> _currentTimelimit;
 	public int GetCurrentTimelimit => _currentTimelimit.Value;
@@ -38,9 +38,7 @@ public class EventMainpart : MonoBehaviour
 	private readonly ReactiveProperty<bool> _isEndCountdown = new ReactiveProperty<bool>(false);
 	public IReadOnlyReactiveProperty<bool> EndCountdown => _isEndCountdown;
 
-	// イベントの全行程が終了したことを通知する EP
-	private readonly ReactiveProperty<bool> _isEndEvent = new ReactiveProperty<bool>(false);
-	public IReadOnlyReactiveProperty<bool> EndEvent => _isEndEvent;
+	private bool _isEndEvent = false;    // イベントが終わっているか
 
     void Start()
     {
@@ -89,6 +87,9 @@ public class EventMainpart : MonoBehaviour
 			.Where(collider => collider.gameObject.CompareTag("Player"))
 			.Subscribe(collider =>
 			{
+				_isEndEvent = true;
+
+				// クリアタイムを計算
 				clearTimeText.text
 					= $"{EventTimelimit.GetMinutesToString(defaultTimelimit - GetCurrentTimelimit)} : {EventTimelimit.GetSecondsToString(defaultTimelimit - GetCurrentTimelimit)}";
 
@@ -99,8 +100,6 @@ public class EventMainpart : MonoBehaviour
 					.Subscribe(_ =>
 					{
 						Debug.Log("ゴールした");
-
-						_isEndEvent.Value = true;
 					});
 			});
 
@@ -109,6 +108,8 @@ public class EventMainpart : MonoBehaviour
 			.Where(time => time < 0)
 			.Subscribe(_ =>
 			{
+				_isEndEvent = true;
+
 				Observable
 					.FromCoroutine(EventTimeOvered)
 					.Publish()
@@ -116,8 +117,6 @@ public class EventMainpart : MonoBehaviour
 					.Subscribe(_ =>
 					{
 						Debug.Log("時間切れ");
-
-						_isEndEvent.Value = true;
 					});
 			});
 	}
@@ -146,7 +145,7 @@ public class EventMainpart : MonoBehaviour
 
 	private IEnumerator DecreaseTimelimit()
 	{
-		while (_currentTimelimit.Value >= 0)
+		while (_currentTimelimit.Value >= 0 && !_isEndEvent)
 		{
 			yield return new WaitForSeconds(1.0f);
 
@@ -154,7 +153,10 @@ public class EventMainpart : MonoBehaviour
 		}
 
 		// UI の残り時間が -1 になるのを防止する
-		_currentTimelimit.Value = 0;
+		if (_currentTimelimit.Value < 0)
+		{
+			_currentTimelimit.Value = 0;
+		}
 	}
 
 	private IEnumerator EventTimeOvered()
@@ -164,7 +166,8 @@ public class EventMainpart : MonoBehaviour
 
 		StartCoroutine(DisplayTemporaryText(span: span, timeOverText));
 
-		EndEventProcess();
+		eventGoal.gameObject.SetActive(false);
+		HideUI(eventTimelimit, eventTimelimitInfo);
 
 		// DisplayTemporaryText コルーチンの終了を待つ
 		yield return new WaitForSeconds(span);
@@ -175,17 +178,11 @@ public class EventMainpart : MonoBehaviour
 		float span = 2.0f;
 		StartCoroutine(DisplayTemporaryText(span: span, winText, clearTimeText, clearTimeInfo));
 
-		EndEventProcess();
+		eventGoal.gameObject.SetActive(false);
+		HideUI(eventTimelimit, eventTimelimitInfo);
 
 		// DisplayTemporaryText コルーチン終了を待つ
 		yield return new WaitForSeconds(span);
-	}
-
-	private void EndEventProcess()
-	{
-		eventGoal.gameObject.SetActive(false);
-
-		HideUI(eventTimelimit, eventTimelimitInfo);
 	}
 
 	private IEnumerator DisplayTemporaryText(float span, params TextMeshProUGUI[] texts)
