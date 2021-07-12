@@ -7,7 +7,9 @@ using UniRx;
 using UniRx.Triggers;
 using TMPro;
 
-// TODO: 車を停止させた時、UI の速度計が 0 にならないので治す
+/*
+	TODO: イベントを何回もプレイできるようにする。ゴールだけまだ出てこない。
+*/
 
 public class EventMainpart : MonoBehaviour
 {
@@ -49,7 +51,7 @@ public class EventMainpart : MonoBehaviour
 		HideUI(countdownText, notifyStartText, eventTimelimit, eventTimelimitInfo, timeOverText, winText, clearTimeText, clearTimeInfo);
 
 		// カットシーンが終わったら
-		eventCutscene.EndBeginEventCutscene
+		eventCutscene.EndStartEventCutscene
 			.Where(endCutsceneFlag => endCutsceneFlag)
 			.Subscribe(endCutsceneFlag =>
 			{

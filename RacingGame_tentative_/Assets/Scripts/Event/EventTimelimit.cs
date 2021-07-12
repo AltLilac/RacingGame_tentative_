@@ -14,7 +14,7 @@ public class EventTimelimit : MonoBehaviour
     {
 		var timelimitUI = GetComponent<TextMeshProUGUI>();
 
-		eventCutscene.EndBeginEventCutscene
+		eventCutscene.EndStartEventCutscene
 			.Where(isEndCutscene => isEndCutscene)
 			.Subscribe(isEndcutscene =>
 			{

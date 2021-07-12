@@ -7,14 +7,15 @@ using UniRx.Triggers;
 
 public class BeginEventProcess : MonoBehaviour
 {
+	[SerializeField] private EventCutscene eventCutscene;   // イベント終了時のカットシーン再生終了通知を受け取る用
+
 	// イベントコリジョン内に触れていたら、イベント開始可能なことを示すテキスト
 	[SerializeField] private GameObject[] onEventCollisionText;
 
 	private bool _inCollison = false;	// イベント開始 UI を出現させるコリジョン内にいるか
 
 	private readonly ReactiveProperty<bool> _beginEvent = new ReactiveProperty<bool>(false);    // イベント開始の通知を送る
-	public IReadOnlyReactiveProperty<bool> BeginEvent => _beginEvent;							// イベント購読用
-
+	public IReadOnlyReactiveProperty<bool> BeginEvent => _beginEvent;                           // イベント購読用
 
 	void Start()
     {
@@ -66,6 +67,15 @@ public class BeginEventProcess : MonoBehaviour
 				Debug.Log("イベント開始");
 
 				gameObject.SetActive(false);
+			});
+
+		eventCutscene.EndGoalEventCutscene
+			.Where(endGoalEventCutscene => endGoalEventCutscene)
+			.Subscribe(endGoalEventCutscene =>
+			{
+				_beginEvent.Value = false;
+
+				gameObject.SetActive(true);
 			});
     }
 
