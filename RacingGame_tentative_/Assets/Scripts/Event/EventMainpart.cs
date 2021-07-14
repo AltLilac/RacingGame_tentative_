@@ -89,6 +89,7 @@ public class EventMainpart : MonoBehaviour
 			.Where(collider => collider.gameObject.CompareTag("Player"))
 			.Subscribe(collider =>
 			{
+				_isEndCountdown.Value = false;
 				_isEndEvent = true;
 
 				// クリアタイムを計算
