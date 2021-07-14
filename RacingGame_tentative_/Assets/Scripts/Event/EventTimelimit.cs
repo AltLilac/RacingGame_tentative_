@@ -26,6 +26,7 @@ public class EventTimelimit : MonoBehaviour
 			.Where(_ => eventMainpart.EndCountdown.Value)
 			.Subscribe(_ =>
 			{
+				Debug.Log(timelimitUI.text);
 				timelimitUI.text = $"{GetMinutesToString(eventMainpart.GetCurrentTimelimit)}:{GetSecondsToString(eventMainpart.GetCurrentTimelimit)}";
 			});
     }

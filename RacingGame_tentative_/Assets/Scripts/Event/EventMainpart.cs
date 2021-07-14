@@ -8,7 +8,7 @@ using UniRx.Triggers;
 using TMPro;
 
 /*
-	TODO: イベントを何回もプレイできるようにする。ゴールだけまだ出てこない。
+	TODO:
 */
 
 public class EventMainpart : MonoBehaviour
@@ -55,6 +55,9 @@ public class EventMainpart : MonoBehaviour
 			.Where(endCutsceneFlag => endCutsceneFlag)
 			.Subscribe(endCutsceneFlag =>
 			{
+				_currentTimelimit.Value = defaultTimelimit;
+				_isEndEvent = false;
+
 				// カウントダウンコルーチンが終了したら
 				Observable
 					.FromCoroutine(BeginCountdown)
@@ -148,6 +151,8 @@ public class EventMainpart : MonoBehaviour
 
 	private IEnumerator DecreaseTimelimit()
 	{
+		Debug.Log("DecreaseTimelimit");
+
 		while (_currentTimelimit.Value >= 0 && !_isEndEvent)
 		{
 			yield return new WaitForSeconds(1.0f);
