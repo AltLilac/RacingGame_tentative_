@@ -8,7 +8,7 @@ using UniRx.Triggers;
 using TMPro;
 
 /*
-	TODO:
+	TODO:　イベントをマップに配置する。ゴール地点をミニマップに表示する方法を考える
 */
 
 public class EventMainpart : MonoBehaviour
