@@ -10,7 +10,7 @@ public class CarEventListener : MonoBehaviour
 	[SerializeField] private EventGoal eventGoal;                   // イベントのゴール通知を取得する用
 	[SerializeField] private EventMainpart eventMainpart;           // イベント本体の開始地点情報を取得する用
 
-	private CarController carController;
+	[SerializeField] private CarController carController;
 
 	private const float WaitFadeOutTime = 2.0f;                     // イベントカットシーン開始時のフェードアウトが終わるまで待つ時間 
 
