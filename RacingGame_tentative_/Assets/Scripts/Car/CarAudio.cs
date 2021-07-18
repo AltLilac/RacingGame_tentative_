@@ -15,11 +15,23 @@ public class CarAudio : MonoBehaviour
     {
         var accelSound = SetUpAudioSource(accelClip);
 
+		// 車の Input が有効だったら
 		this.UpdateAsObservable()
+			.Where(_ => CarManager.IsCarInputEnabled)
+			.Select(_ => accelSound.volume = 1)
 			.Subscribe(_ =>
 			{
 				// 速度に応じてエンジン音のピッチを上げる
 				accelSound.pitch = defaultPitch + CarController.GetSpeed() / pitchMultiplier;
+			});
+
+		// 車の Input が無効だったら
+		this.UpdateAsObservable()
+			.Where(_ => !CarManager.IsCarInputEnabled)
+			.Select(_ => accelSound.volume = 0)	// エンジン音をミュート
+			.Subscribe(_ =>
+			{
+
 			});
     }
 
